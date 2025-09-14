@@ -1,23 +1,29 @@
 #!/usr/bin/env python3
 """
-Simple test client for RServer Link layer.
+MeshCurl - HTTP client for Reticulum networks, like curl over mesh.
 """
 
 import RNS
 import sys
 import time
+import argparse
 
 
 def main():
-    print("RServer Test Client")
+    parser = argparse.ArgumentParser(description="MeshCurl - HTTP client for Reticulum networks")
+    parser.add_argument("destination", help="Server destination hash")
+    parser.add_argument("-X", "--request", default="GET", help="HTTP method (default: GET)")
+    parser.add_argument("path", nargs="?", default="/", help="Path to request (default: /)")
+    parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
+    
+    args = parser.parse_args()
+    
+    print("MeshCurl - HTTP over Reticulum")
     print("=" * 30)
     
-    if len(sys.argv) != 2:
-        print("Usage: python test_client.py <destination_hash>")
-        print("Example: python test_client.py a1b2c3d4e5f6...")
-        sys.exit(1)
-        
-    destination_hash = sys.argv[1]
+    destination_hash = args.destination
+    method = args.request.upper()
+    path = args.path if args.path.startswith('/') else '/' + args.path
     
     try:
         # Initialize Reticulum
@@ -86,13 +92,24 @@ def main():
         
         # Set up callback to receive responses
         def client_packet_received(data, packet):
-            print(f"✓ Received response {len(data)} bytes: {data}")
+            print(f"✓ Received HTTP response ({len(data)} bytes):")
+            try:
+                response_text = data.decode('utf-8')
+                print(response_text)
+            except UnicodeDecodeError:
+                print(f"Binary data: {data}")
             
         link.set_packet_callback(client_packet_received)
         
-        # Send test message
-        test_message = b"Hello from test client!"
-        print(f"Sending {len(test_message)} bytes: {test_message}")
+        # Send HTTP request like curl
+        http_request = f"{method} {path} HTTP/1.1\r\nHost: {destination_hash}\r\nUser-Agent: MeshCurl/1.0\r\nAccept: text/html,*/*\r\n\r\n"
+        test_message = http_request.encode('utf-8')
+        
+        if args.verbose:
+            print(f"Sending HTTP request ({len(test_message)} bytes):")
+            print(http_request)
+        else:
+            print(f"Requesting: {method} {path}")
         packet = RNS.Packet(link, test_message)
         packet.send()
         
