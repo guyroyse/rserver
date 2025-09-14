@@ -6,12 +6,14 @@ RServer is part of the **MeshWeb** project - a universal browser/server system f
 
 ## What RServer Does
 
-- **Serves static web content** (HTML, CSS, JS, images) over Reticulum networks
-- **Implements HTTP-like semantics** using Reticulum Links (not LXMF)
-- **Auto-announces** itself on the network for browser discovery
-- **File-based serving** - point it at a directory, it serves the contents
+- **Serves static web content** (HTML, CSS, JS, images, PDFs, etc.) over Reticulum networks
+- **Implements HTTP/1.1-like semantics** using Reticulum Links (not LXMF)
+- **File-based serving** - serves files from a configurable public directory
 - **Handles routing** - supports paths like `/`, `/about.html`, `/images/logo.png`
-- **MIME type detection** for proper Content-Type headers
+- **MIME type detection** - automatic Content-Type headers for all file types
+- **Binary file support** - serves images, fonts, PDFs, and other binary content
+- **Security features** - prevents directory traversal attacks
+- **Error handling** - proper HTTP status codes (200, 404, 403, 500, etc.)
 
 ## Architecture Decisions
 
@@ -50,30 +52,47 @@ Response Format:
 4. **MIME type detection** for Content-Type headers
 5. **Basic routing logic** for path resolution
 
-### Python Structure
-```python
-import RNS
-import RNS.Destination
+### Current Implementation
 
-class ReticServer:
-    def __init__(self, content_dir):
-        # Create Reticulum destination
-        # Register link request handler
-        # Start announcing server availability
-        
-    def handle_request(self, path, source):
-        # Load file from content_dir + path
-        # Return content + mime type  
-        # Handle 404s gracefully
+**Modular Architecture:**
 ```
+rserver/
+├── http/                    # HTTP protocol handling
+│   ├── http.py             # Main HTTP request handler
+│   ├── request_parser.py   # HTTP request parsing
+│   └── response_builder.py # HTTP response construction
+├── reticulum/              # Reticulum networking
+│   ├── identity.py         # Cryptographic identity management
+│   ├── destination.py      # Network destination creation
+│   └── link.py             # Link connection handling
+├── config.py               # TOML configuration
+├── content.py              # Public directory management
+├── rserver.py              # Main server orchestrator
+└── meshcurl.py             # HTTP client for testing
+
+```
+
+**Key Features Implemented:**
+- **HTTP/1.1 request parsing** - method, path, headers, body
+- **MIME type detection** - uses Python mimetypes module
+- **Binary file serving** - all files read as binary for universal support
+- **Security checks** - blocks directory traversal with ".."
+- **Error responses** - 400, 403, 404, 405, 500 with proper HTTP format
+- **Directory index** - serves index.html for directory requests
+- **Configuration** - TOML config files for identity, paths, defaults
 
 ## User Experience Goals
 
 ### For Developers (Server Operators)
 ```bash
-pip install meshweb
-rserver ./my-website/
-# Output: "Server running at reticulum://a1b2c3d4e5f6.../index.html"
+# Start the server
+python rserver.py
+# Output: "✓ Server destination: a1b2c3d4e5f6789abcdef..."
+
+# Test with meshcurl (like curl for Reticulum)
+python meshcurl.py a1b2c3d4e5f6... /
+python meshcurl.py a1b2c3d4e5f6... /styles.css
+python meshcurl.py a1b2c3d4e5f6... /guy-head.png
 ```
 
 ### For End Users (Browser Users)
@@ -96,13 +115,23 @@ While starting with static files, architecture should support:
 - **Authentication** (user login)
 - **Real-time features** (WebSocket-like over Links)
 
-## Development Priority
+## Development Status
 
-1. **Core serving** - Static HTML/CSS/JS files
-2. **Discovery** - Announce mechanism  
-3. **Error handling** - 404s, permission issues
-4. **MIME types** - Proper Content-Type detection
-5. **Command line** - Simple developer interface
+**✅ Completed:**
+1. **Core serving** - Static HTML/CSS/JS/image files working
+2. **Error handling** - 404s, 403s, 500s with proper HTTP responses
+3. **MIME types** - Automatic Content-Type detection for all file types
+4. **Binary file support** - Images, PDFs, fonts served correctly
+5. **HTTP protocol** - Full HTTP/1.1 request/response implementation
+6. **Security** - Directory traversal protection
+7. **Testing tool** - MeshCurl for development and debugging
+
+**🚧 Future Enhancements:**
+- **Discovery mechanism** - Auto-announce for browser discovery
+- **Directory listings** - Show folder contents when no index.html
+- **Custom error pages** - Serve HTML error pages instead of plain text
+- **Configuration** - Command line options for port, directory, etc.
+- **Performance** - Caching, compression, keep-alive connections
 
 ## Why This Matters
 
