@@ -8,6 +8,7 @@ import config
 from identity import get_or_create_identity
 from destination import create_destination
 from content import ensure_public_directory
+from link import start_link_server
 
 def main():
     print("RServer - Reticulum Web Server")
@@ -43,8 +44,17 @@ def main():
             print(f"✓ Created public directory: {config.public_dir()}")
             print(f"✓ Created default file: {config.default_file()}")
 
-        # Start the web server        
-        print("\nReticulum is running. Press Ctrl+C to exit.")
+        # Set up simple echo handler for testing
+        def echo_handler(data):
+            print(f"✓ Received {len(data)} bytes: {data}")
+            response = b"ECHO: " + data
+            print(f"✓ Sending {len(response)} bytes: {response}")
+            return response
+            
+        # Start Link server
+        start_link_server(destination, echo_handler)
+        
+        print("\nRServer is running. Press Ctrl+C to exit.")
         
         # Keep the program running
         while True:
