@@ -23,6 +23,11 @@ def server_name():
     config = load_config()
     return config.get("server", {}).get("name", "RServer Demo")
 
+def default_file():
+    """Get the default file name (e.g., index.html)."""
+    config = load_config()
+    return config.get("server", {}).get("default_file", "index.html")
+
 def announce_interval():
     """Get the announcement interval in seconds."""
     config = load_config()
@@ -34,11 +39,14 @@ def app_context():
     network = config.get("network", {})
     return network.get("app_name", "rserver"), network.get("aspect", "web")
 
+
 # Cache for loaded config
 _config_cache = None
 
+
 def load_config():
     """Load configuration from TOML file with defaults."""
+
     global _config_cache
     
     # Return cached config if already loaded
@@ -57,32 +65,33 @@ def load_config():
     except Exception as e:
         raise ValueError(f"Error reading config file {CONFIG_PATH}: {e}")
 
+
 def create_default_config():
     """Create a default server.toml file."""
+    
     os.makedirs("config", exist_ok=True)
     
     toml_content = """# RServer Configuration
 
 [server]
-# Directory to serve static content from
-public_dir = "public/"
-
 # Server display name (for discovery)  
 name = "RServer Demo"
-
-# Enable directory listings for folders without index.html
-directory_listings = true
 
 # Path to server identity file
 identity_path = "config/identity"
 
-[network]
-# Server announcement interval in seconds
-announce_interval = 300
+# File serving settings
+public_dir = "public/"        # Directory to serve static content from
+directory_listings = true     # Enable directory listings for folders without default file
+default_file = "index.html"   # Default file to serve (e.g., index.html, home.html)
 
+[network]
 # Application context for destination (should not normally be changed)
 app_name = "rserver"
 aspect = "web"
+
+# Server announcement interval in seconds
+announce_interval = 300
 """
     
     with open(CONFIG_PATH, 'w') as f:
